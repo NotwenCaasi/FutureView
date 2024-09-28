@@ -1,0 +1,86 @@
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+h1 {
+  color: #333;
+  margin-bottom: 20px;
+}
+
+form {
+  display: inline-block;
+  text-align: left;
+}
+
+label {
+  display: block;
+  margin: 10px 0;
+}
+
+button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #ddd;
+}
+
+#map-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#street-view {
+  margin: 20px auto;
+  width: 70%;
+  height: 600px;
+}
+
+#mini-map {
+  width: 28%;
+  height: 600px;
+  margin-left: 10px;
+}
+
+#capture-button {
+  margin: 10px;
+  padding: 10px 20px;
+  font-size: 16px;
+}
+
+#capture-button {
+  margin-top: 20px;
+}
+
+/* Flexbox container for images */
+#image-container {
+  display: flex;
+  flex-wrap: nowrap; /* Prevent wrapping */
+  justify-content: center; /* Centers the images horizontally */
+  align-items: center;
+  gap: 10px; /* Add spacing between images */
+  margin-top: 20px;
+}
+
+/* Styling for each image */
+#image-container img {
+  width: 48%; /* Adjust width to 48% to fit two images side by side with some gap */
+  max-width: 100%; /* Ensure images don't exceed their container's width */
+}
+
+/* When the width is less than 640px, stack the images vertically */
+@media (max-width: 640px) {
+  #image-container {
+    flex-direction: column; /* Stack images vertically */
+    align-items: center;    /* Center images */
+  }
+
+  #image-container img {
+    width: 100%; /* Images take full width in vertical layout */
+  }
+}

@@ -1,0 +1,5 @@
+#Chateau d'eau recent
+$lat0 = 47.319210  # Reference latitude (degrees)
+$lng0 = -0.916698  # Reference longitude (degrees)
+$z0 = 163  # Elevation at the origin (in meters)
+$empty = false

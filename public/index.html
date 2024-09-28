@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Insertion paysagère</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Insertion paysagère</h1>
+  <h2>Sélectionner les contructions que vous souhaitez insérer dans le paysage</h2>
+  <!-- Model Selection Form -->
+  <form id="model-selection-form">
+    <select id="model-dropdown"></select>
+    <button type="button" id="load-model-button">Load Model</button>
+  </form>
+
+  <!-- Container for the street view and mini-map -->
+  <div id="map-container">
+    <div id="street-view"></div>
+    <div id="mini-map"></div>
+  </div>
+
+  <!-- Button to capture the view -->
+  <button id="capture-button">Capture View</button>
+
+  <!-- Include Axios -->
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+  <!-- Include your client-side JavaScript -->
+  <script src="app.js"></script>
+
+  <!-- Include the Google Maps JavaScript API -->
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAXMvL6EIqqVU3fwtyicfB-SFqrgZzSJn4&callback=initMap">
+  </script>
+
+  <!-- Image container for reference and future images -->
+  <div id="image-container" >
+    <img id="image-ref" src="/data/image_ref.jpg" alt="Reference Image" style="display: block; margin-bottom: 10px;">
+    <img id="image-future" src="/data/image_future.png" alt="Future Image" style="display: block;">
+  </div>
+
+
+  <div style="font-size: 12px;">
+    Map data ©2023 Google
+  </div>
+
+</body>
+</html>

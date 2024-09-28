@@ -1,0 +1,5 @@
+#Empty
+$lat0 = 0
+$lng0 = 0
+$z0 = 0
+$empty = true
