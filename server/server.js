@@ -265,7 +265,7 @@ async function generateImageFuture() {
       const newAlpha = newData[i + 3]; // Alpha from image_new
 
       // Improved sky detection logic based on a lighter blue tone threshold
-      const isSky = blue > 150 && red < blue && green < blue;
+      const isSky = blue > 100 && red < blue && green < blue;
 
       if (isSky && newAlpha === 255) {
         // Apply the new image pixel only in detected sky areas and when image_new is fully opaque
