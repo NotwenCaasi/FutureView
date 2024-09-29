@@ -147,13 +147,20 @@ function reloadImage(imageId, src) {
 function initializeWebSocket() {
   const ws = new WebSocket(`ws://${window.location.host}`);
 
-  // Listen for WebSocket messages from the server
+  ws.onopen = function() {
+    console.log('WebSocket connection opened');
+  };
+
+  ws.onerror = function(error) {
+    console.error('WebSocket error:', error);
+  };
+
   ws.onmessage = function(event) {
     const data = JSON.parse(event.data);
 
-    // Check if the reference image was updated
-    if (data.imageRefUpdated) {
-      reloadImage('image-ref', '/data/image_ref.jpg');
+    // Check if the future-modified image was updated
+    if (data.imageFutureModifiedUpdated) {
+      reloadImage('image-future-modified', '/data/image_future_modified.png');
     }
 
     // Check if the future image was updated
@@ -161,7 +168,12 @@ function initializeWebSocket() {
       reloadImage('image-future', '/data/image_future.png');
     }
   };
+
+  ws.onclose = function() {
+    console.log('WebSocket connection closed');
+  };
 }
+
 
 // Add the event listener for the capture button
 function initializeCaptureButton() {
@@ -223,14 +235,20 @@ function initializeModelSelection() {
 
 // Function to load the selected model
 function loadSelectedModel(modelName) {
-  axios.post('/api/load-model', { model: modelName })
-    .then(response => {
-      console.log('Model loaded successfully:', response.data);
-    })
-    .catch(error => {
-      console.error('Error loading model:', error);
-    });
+  console.log('Selected model:', modelName); // Log selected model
+  axios.post('/api/load-model', { model: modelName }, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+  .then(response => {
+    console.log('Model loaded successfully:', response.data);
+  })
+  .catch(error => {
+    console.error('Error loading model:', error);
+  });
 }
+
 
 
 // Initialize the app by setting up the map, WebSocket, model loader, and capture button

@@ -1,0 +1,4 @@
+{
+  "verbose": true,
+  "ignore": ["server/data/*","server/sketchup/*","public/**","documentation/**"]
+}
