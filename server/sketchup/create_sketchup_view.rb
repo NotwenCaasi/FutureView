@@ -106,19 +106,19 @@ options =  Sketchup.active_model.rendering_options
 #options["DisplaySky"] = false
 #options["DisplayGround"] = false
 
-
 # Render the image with transparent background
-options = {
+options1 = {
   filename: "C:/Users/v-martineau/Documents/Etudes/EOLIEN/2-PE MSL Champ Fleury/FutureView/public/data/image_new.png",
   width: 640,
   height: 640,
   transparent: true
 }
 
-success = view.write_image(options)
+success = view.write_image(options1)
 
 if success
-  puts "Image exported successfully to #{options[:filename]}"
+  puts "Image exported successfully to #{options1[:filename]}"
 else
-  UI.messagebox("Error exporting image to #{options[:filename]}")
+  UI.messagebox("Error exporting image to #{options1[:filename]}")
 end
+

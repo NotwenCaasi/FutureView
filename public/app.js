@@ -83,6 +83,13 @@ function initStreetView() {
   // Update the marker rotation when Street View orientation (heading) changes
   panorama.addListener('pov_changed', () => {
     latestPOV = panorama.getPov();
+
+    const zoom = panorama.getZoom();
+    const fov = 180 / Math.pow(2, zoom);
+
+    const streetViewHeight = document.getElementById('street-view').offsetHeight;
+    createScale('street-view-scale', fov, streetViewHeight);
+
     miniMapMarker.setIcon({
       path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
       scale: 5,
@@ -98,10 +105,6 @@ function initStreetView() {
     miniMap.setCenter(newPosition);  // Optionally center the mini-map on the new position
   });
 
-  // Capture heading and pitch (POV) changes
-  panorama.addListener('pov_changed', () => {
-    latestPOV = panorama.getPov();
-  });
 }
 
 // Capture the current Street View and send a request to the server
@@ -126,6 +129,9 @@ function captureCurrentView() {
       .get('/api/streetview', { params: data, responseType: 'blob' })
       .then(response => {
         window.capturedData = data;
+
+        const imageHeight = document.getElementById('image-ref').offsetHeight;
+        createScale('image-scale', fov, imageHeight);
       })
       .catch(error => {
         console.error('Error fetching image:', error);
@@ -157,15 +163,22 @@ function initializeWebSocket() {
 
   ws.onmessage = function(event) {
     const data = JSON.parse(event.data);
-
-    // Check if the future-modified image was updated
-    if (data.imageFutureModifiedUpdated) {
-      reloadImage('image-future-modified', '/data/image_future_modified.png');
+    // Check if the actual image was updated
+    console.log('imageRefUpdated : ', data.imageRefUpdated) 
+    if (data.imageRefUpdated) {
+      reloadImage('image-ref', '/data/image_ref.jpg');
     }
 
-    // Check if the future image was updated
-    if (data.imageFutureUpdated) {
-      reloadImage('image-future', '/data/image_future.png');
+    // Check if the future-over image was updated
+    console.log('imageFutureOverUpdated : ', data.imageFutureOverUpdated) 
+    if (data.imageFutureOverUpdated) {
+      reloadImage('image-future-over', '/data/image_future_over.png');
+    }
+
+    // Check if the future-integrated image was updated
+    console.log('imageFutureIntegratedUpdated : ', data.imageFutureIntegratedUpdated) 
+    if (data.imageFutureIntegratedUpdated) {
+      reloadImage('image-future-integrated', '/data/image_future_integrated.png');
     }
   };
 
@@ -175,9 +188,13 @@ function initializeWebSocket() {
 }
 
 
-// Add the event listener for the capture button
+// Add the event listener for the buttons
 function initializeCaptureButton() {
   document.getElementById('capture-button').addEventListener('click', captureCurrentView);
+}
+function initializeExportButtons() {
+  document.getElementById('export-pdf-button').addEventListener('click', exportAsPDF);
+  document.getElementById('export-image-button').addEventListener('click', exportAsImage);
 }
 
 // Fetch available models from the server
@@ -249,6 +266,111 @@ function loadSelectedModel(modelName) {
   });
 }
 
+function exportAsPDF() {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF();
+
+  // Use html2canvas to capture the map-container and image-container sections
+  html2canvas(document.querySelector('#map-container')).then(function(mapCanvas) {
+    html2canvas(document.querySelector('#image-container')).then(function(imageCanvas) {
+      // Combine map and image containers into one canvas
+      const combinedCanvas = document.createElement('canvas');
+      combinedCanvas.width = Math.max(mapCanvas.width, imageCanvas.width);
+      combinedCanvas.height = mapCanvas.height + imageCanvas.height;
+
+      const context = combinedCanvas.getContext('2d');
+      context.drawImage(mapCanvas, 0, 0);
+      context.drawImage(imageCanvas, 0, mapCanvas.height);
+
+      // Convert the combined canvas into an image and add it to the PDF
+      const imgData = combinedCanvas.toDataURL('image/png');
+      pdf.addImage(imgData, 'PNG', 10, 10, 190, 0); // Adjust size and position in PDF
+
+      // Save the PDF
+      pdf.save('page-export.pdf');
+    });
+  });
+}
+
+function exportAsImage() {
+  // Use html2canvas to capture the map-container and image-container sections
+  html2canvas(document.querySelector('#map-container')).then(function(mapCanvas) {
+    html2canvas(document.querySelector('#image-container')).then(function(imageCanvas) {
+      // Combine map and image containers into one canvas
+      const combinedCanvas = document.createElement('canvas');
+      combinedCanvas.width = Math.max(mapCanvas.width, imageCanvas.width);
+      combinedCanvas.height = mapCanvas.height + imageCanvas.height;
+
+      const context = combinedCanvas.getContext('2d');
+      context.drawImage(mapCanvas, 0, 0);
+      context.drawImage(imageCanvas, 0, mapCanvas.height);
+
+      // Convert the combined canvas into an image and trigger download
+      const imgData = combinedCanvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = imgData;
+      link.download = 'page-export.png';
+      link.click();
+    });
+  });
+}
+
+function createScale(containerId, fov, height) {
+  const container = document.getElementById(containerId);
+
+  // Clear any existing scale
+  container.innerHTML = '';
+
+  // Calculate the number of segments
+  const segments = 5; // Number of divisions in the scale
+  const anglePerSegment = fov / segments;
+  const segmentHeight = height / segments;
+
+  container.style.position = 'relative';
+  container.style.width = '10px';
+  container.style.backgroundColor = 'transparent';
+  container.style.display = 'flex';
+  container.style.flexDirection = 'column-reverse';
+
+  // Create the scale
+  for (let i = 0; i <= segments; i++) {
+
+    const label = document.createElement('div');
+    label.style.position = 'absolute';
+    label.style.color = 'black';
+    label.style.fontSize = '12px';
+    label.style.transform = 'translate(-25px, 50%)';
+    label.style.left = '0';
+    label.style.bottom = `${i * segmentHeight}px`;
+    label.innerText = `${Math.round((fov / (segments - 1)) * i)}°`;
+    container.appendChild(label);
+
+    if (i < segments) {
+      const segment = document.createElement('div');
+      segment.style.height = `${segmentHeight}px`;
+      segment.style.width = '100%';
+      segment.style.backgroundColor = i % 2 === 0 ? 'black' : 'white';
+      container.appendChild(segment);
+    }
+
+  }
+}
+
+function initializeScales() {
+  // Example FOVs (adjust dynamically as needed)
+  const streetViewZoom = panorama ? panorama.getZoom() : 1;
+  const streetViewFOV = 180 / Math.pow(2, streetViewZoom);
+
+  const imageFOV = window.capturedData ? window.capturedData.fov : 75;
+
+  // Heights of the elements
+  const streetViewHeight = document.getElementById('street-view').offsetHeight;
+  const imageHeight = document.getElementById('image-ref').offsetHeight;
+
+  // Create scales
+  createScale('street-view-scale', streetViewFOV, streetViewHeight);
+  createScale('image-scale', imageFOV, imageHeight);
+}
 
 
 // Initialize the app by setting up the map, WebSocket, model loader, and capture button
@@ -258,6 +380,9 @@ function initializeApp() {
   initializeModelSelection();
   initializeWebSocket();
   initializeCaptureButton();
+  initializeExportButtons();
+  initializeScales();
+  window.addEventListener('resize', initializeScales); // Recalculate on window resize
 }
 
 // Run the initialization after the DOM content is fully loaded

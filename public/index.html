@@ -10,21 +10,32 @@
   <h2>Sélectionner les contructions que vous souhaitez insérer dans le paysage</h2>
   <!-- Model Selection Form -->
   <form id="model-selection-form">
-    <select id="model-dropdown"></select>
-    <button type="button" id="load-model-button">Load Model</button>
+    <select id="model-dropdown">1- Select model</select>
+    <button type="button" id="load-model-button">2- Load Model</button>
   </form>
+  <!-- Button to capture the view -->
+  <button id="capture-button">3- Capture View</button>
+  <!-- Button to export the result -->
+  <button id="export-pdf-button">4A- Export as PDF</button>
+  <button id="export-image-button">4B- Export as Image</button>
 
   <!-- Container for the street view and mini-map -->
-  <div id="map-container">
-    <div id="street-view"></div>
-    <div id="mini-map"></div>
-  </div>
+<div id="map-container">
+  <div id="street-view-scale"></div>
+  <div id="street-view"></div>
+  <div id="mini-map"></div>
+</div>
 
-  <!-- Button to capture the view -->
-  <button id="capture-button">Capture View</button>
+
 
   <!-- Include Axios -->
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+  <!-- Include html2canvas to capture HTML as image -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <!-- Include jsPDF to generate PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <!-- Include your client-side JavaScript -->
   <script src="app.js"></script>
@@ -36,8 +47,10 @@
 
   <!-- Image container for future modified and future images -->
   <div id="image-container" >
-    <img id="image-future-modified" src="/data/image_future_modified.png" alt="Reference Image" style="display: block; margin-bottom: 10px;">
-    <img id="image-future" src="/data/image_future.png" alt="Future Image" style="display: block;">
+    <div id="image-scale"></div>
+    <img id="image-ref" src="/data/image_ref.jpg" alt="Actual Image" style="display: block;">
+    <img id="image-future-over" src="/data/image_future_over.png" alt="Reference Image" style="display: block; margin-bottom: 10px;">
+    <img id="image-future-integrated" src="/data/image_future_integrated.png" alt="Future Image" style="display: block;">
   </div>
 
 

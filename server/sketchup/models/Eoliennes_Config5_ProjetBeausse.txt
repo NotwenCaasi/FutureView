@@ -1,5 +1,0 @@
-#Eoliennes
-$lat0 = 47 + (18 / 60.0) + (54.914 / 3600.0)  # Reference latitude (degrees)
-$lng0 = -(0 + (56 / 60.0) + (47.351 / 3600.0))  # Reference longitude (degrees)
-$z0 = 137  # Elevation at the origin (in meters)
-$empty = false

@@ -20,8 +20,8 @@ const sketchupModelDirectory = path.join(__dirname, 'sketchup/models');  // Mode
 
 const imageRefPath = path.join(__dirname, '../public/data/image_ref.jpg');
 const imageNewPath = path.join(__dirname, '../public/data/image_new.png');
-const imageFuturePath = path.join(__dirname, '../public/data/image_future.png');
-const imageFutureModifiedPath = path.join(__dirname, '../public/data/image_future_modified.png');
+const imageFutureOverPath = path.join(__dirname, '../public/data/image_future_over.png');
+const imageFutureIntegratedPath = path.join(__dirname, '../public/data/image_future_integrated.png');
 
 const defaultModel = 'empty';  // Define the default model to load
 
@@ -29,8 +29,9 @@ const dataDir = path.join(__dirname, '../public/data');
 
 let sketchupScriptCustomView = null;
 
-let imageFutureModifiedUpdatedAt = null;
-let imageFutureUpdatedAt = null;
+let imageRefUpdatedAt = null;
+let imageFutureOverUpdatedAt = null;
+let imageFutureIntegratedUpdatedAt = null;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
@@ -235,15 +236,15 @@ async function generateImageFuture() {
     // Overlay image_new onto image_ref to create image_future
     await imgRef
       .composite([{ input: imageNewPath, blend: 'over' }])  // Overlay image_new
-      .toFile(imageFuturePath);  // Write image_future
-    console.log('image_future.png generated successfully.');
+      .toFile(imageFutureOverPath);  // Write image_future
+    console.log('image_future_over.png generated successfully.');
 
     // Ensure the file is fully written
-    await waitForFile(imageFuturePath, 60000, 1000);  // Wait up to 60s with 1s interval
-    console.log('image_future.png is now available for use.');
+    await waitForFile(imageFutureOverPath, 60000, 1000);  // Wait up to 60s with 1s interval
+    console.log('image_future_over.png is now available for use.');
 
-    // Generate image_future_modified where sky is detected (simple blue-based filter)
-    console.log('Generating image_future_modified...');
+    // Generate image_future_integrated where sky is detected (simple blue-based filter)
+    console.log('Generating image_future_integrated...');
 
     // Read both images into raw RGBA buffers
     const [imgRefBuffer, imgNewBuffer] = await Promise.all([
@@ -264,8 +265,8 @@ async function generateImageFuture() {
 
       const newAlpha = newData[i + 3]; // Alpha from image_new
 
-      // Improved sky detection logic based on a lighter blue tone threshold
-      const isSky = blue > 100 && red < blue && green < blue;
+      // Improved sky detection logic based on a lighter blue tone threshold or a uniform grey/white sky threshold
+      const isSky = (blue>100 && red<blue && green<blue) || (blue>100 && red>(blue-20) && red<(blue+20) && green>(blue-20) && green<(blue+20));
 
       if (isSky && newAlpha === 255) {
         // Apply the new image pixel only in detected sky areas and when image_new is fully opaque
@@ -289,22 +290,22 @@ async function generateImageFuture() {
         height: info.height,
         channels: 4
       }
-    }).toFile(imageFutureModifiedPath);
-    console.log('Generated image_future_modified.png');
+    }).toFile(imageFutureIntegratedPath);
+    console.log('Generated image_future_integrated.png');
 
     // Ensure the file is fully written
-    await waitForFile(imageFutureModifiedPath, 60000, 1000);  // Wait up to 60s with 1s interval
-    console.log('image_future_modified.png is now available for use.');
+    await waitForFile(imageFutureIntegratedPath, 60000, 1000);  // Wait up to 60s with 1s interval
+    console.log('image_future_integrated.png is now available for use.');
 
   } catch (error) {
-    console.error('Error generating image_future or image_future_modified:', error);
+    console.error('Error generating image_future or image_future_integrated:', error);
   }
 }
 
 
 
-function broadcastImageUpdate(imageFutureModifiedUpdated, imageFutureUpdated) {
-  const updateMessage = JSON.stringify({ imageFutureModifiedUpdated, imageFutureUpdated });
+function broadcastImageUpdate(imageRefUpdated, imageFutureOverUpdated, imageFutureIntegratedUpdated) {
+  const updateMessage = JSON.stringify({ imageRefUpdated, imageFutureOverUpdated, imageFutureIntegratedUpdated });
   if (wss) {
     wss.clients.forEach((client) => {
       if (client.readyState === WebSocket.OPEN) {
@@ -319,15 +320,20 @@ function broadcastImageUpdate(imageFutureModifiedUpdated, imageFutureUpdated) {
 
 async function updateImageTimestamps() {
   try {
-    // Check if image_future exists and update the timestamp
-    await fs.access(imageFuturePath);
-    imageFutureUpdatedAt = (await fs.stat(imageFuturePath)).mtime;
-    console.log('Updated image_future timestamp:', imageFutureUpdatedAt);
+    // Check if image_ref exists and update the timestamp
+    await fs.access(imageRefPath);
+    imageRefUpdatedAt = (await fs.stat(imageRefPath)).mtime;
+    console.log('Updated image_ref timestamp:', imageRefUpdatedAt);
+
+    // Check if image_future_over exists and update the timestamp
+    await fs.access(imageFutureOverPath);
+    imageFutureOverUpdatedAt = (await fs.stat(imageFutureOverPath)).mtime;
+    console.log('Updated image_future_over timestamp:', imageFutureOverUpdatedAt);
     
     // Check if image_future_modified exists and update the timestamp
-    await fs.access(imageFutureModifiedPath);
-    imageFutureModifiedUpdatedAt = (await fs.stat(imageFutureModifiedPath)).mtime;
-    console.log('Updated image_future_modified timestamp:', imageFutureModifiedUpdatedAt);
+    await fs.access(imageFutureIntegratedPath);
+    imageFutureIntegratedUpdatedAt = (await fs.stat(imageFutureIntegratedPath)).mtime;
+    console.log('Updated image_future_integrated timestamp:', imageFutureIntegratedUpdatedAt);
   } catch (error) {
     console.error('Error updating image timestamps:', error);
   }
@@ -336,23 +342,30 @@ async function updateImageTimestamps() {
 
 async function refreshImagesStatus() {
   try {
-    // Check if image_future exists and get its stats
-    await fs.access(imageFuturePath);
-    const currentImageFutureUpdatedAt = (await fs.stat(imageFuturePath)).mtime;
-    console.log('Current image_future mtime:', currentImageFutureUpdatedAt);
+    // Check if image_ref exists and get its stats
+    await fs.access(imageRefPath);
+    const currentimageRefUpdatedAt = (await fs.stat(imageRefPath)).mtime;
+    console.log('Current image_ref mtime:', currentimageRefUpdatedAt);
 
-    // Check if image_future_modified exists and get its stats
-    await fs.access(imageFutureModifiedPath);
-    const currentImageFutureModifiedUpdatedAt = (await fs.stat(imageFutureModifiedPath)).mtime;
-    console.log('Current image_future_modified mtime:', currentImageFutureModifiedUpdatedAt);
+    // Check if image_future_over exists and get its stats
+    await fs.access(imageFutureOverPath);
+    const currentimageFutureOverUpdatedAt = (await fs.stat(imageFutureOverPath)).mtime;
+    console.log('Current image_future_over mtime:', currentimageFutureOverUpdatedAt);
+
+    // Check if image_future_integrated exists and get its stats
+    await fs.access(imageFutureIntegratedPath);
+    const currentimageFutureIntegratedUpdatedAt = (await fs.stat(imageFutureIntegratedPath)).mtime;
+    console.log('Current image_future_integrated mtime:', currentimageFutureIntegratedUpdatedAt);
 
     // Compare timestamps to detect changes
-    const imageFutureModifiedUpdated = currentImageFutureModifiedUpdatedAt > imageFutureModifiedUpdatedAt;
-    const imageFutureUpdated = currentImageFutureUpdatedAt > imageFutureUpdatedAt;
+    const imageRefUpdated = currentimageRefUpdatedAt > imageRefUpdatedAt;
+    const imageFutureOverUpdated = currentimageFutureOverUpdatedAt > imageFutureOverUpdatedAt;
+    const imageFutureIntegratedUpdated = currentimageFutureIntegratedUpdatedAt > imageFutureIntegratedUpdatedAt;
 
-    if (imageFutureModifiedUpdated || imageFutureUpdated) {
+
+    if (imageRefUpdated || imageFutureOverUpdated ||imageFutureIntegratedUpdated ) {
       console.log('send message to client to refresh images');
-      broadcastImageUpdate(imageFutureModifiedUpdated, imageFutureUpdated);
+      broadcastImageUpdate(imageRefUpdated, imageFutureOverUpdated, imageFutureIntegratedUpdated);
     } else {
       console.log('No changes detected in images.');
     }

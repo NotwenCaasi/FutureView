@@ -1,23 +1,24 @@
+/* General body styling */
 body {
   font-family: Arial, sans-serif;
   text-align: center;
+  margin: 0;
+  padding: 0;
 }
 
+/* Heading styling */
 h1 {
   color: #333;
   margin-bottom: 20px;
 }
 
+/* Form styling */
 form {
   display: inline-block;
   text-align: left;
 }
 
-label {
-  display: block;
-  margin: 10px 0;
-}
-
+/* Button styling */
 button {
   margin-top: 20px;
   padding: 10px 20px;
@@ -29,58 +30,122 @@ button:hover {
   background-color: #ddd;
 }
 
+/* Map container styling */
 #map-container {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
+  margin: 0 auto;
+  width: 90%; /* Consistent width */
+  max-width: 1200px; /* Max width */
+  box-sizing: border-box;
+}
+
+#street-view-scale,
+#image-scale {
+  position: relative;
+  width: 10px;
+  background-color: transparent; 
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: space-between;
+}
+
+#street-view-scale div,
+#image-scale div {
+  width: 100%;
+}
+
+#street-view, #mini-map {
+  margin: 0;
+  padding: 0;
+  flex-grow: 1;
+  margin-left: 10px;
 }
 
 #street-view {
-  margin: 20px auto;
   width: 70%;
-  height: 600px;
+  height: 300px;
 }
 
 #mini-map {
   width: 28%;
-  height: 600px;
+  height: 300px;
   margin-left: 10px;
 }
 
+/* Capture button styling */
 #capture-button {
   margin: 10px;
   padding: 10px 20px;
   font-size: 16px;
 }
 
-#capture-button {
-  margin-top: 20px;
-}
-
-/* Flexbox container for images */
+/* Image container styling */
 #image-container {
   display: flex;
-  flex-wrap: nowrap; /* Prevent wrapping */
-  justify-content: center; /* Centers the images horizontally */
-  align-items: center;
-  gap: 10px; /* Add spacing between images */
-  margin-top: 20px;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 20px auto;
+  width: 90%; /* Consistent width */
+  max-width: 1200px;
+  box-sizing: border-box;
+}
+
+#image-scale {
+  width: 40px;
+  background: linear-gradient(to bottom, black, white); /* Black-to-white gradient */
+  color: black;
+  font-size: 12px;
+  text-align: center;
 }
 
 /* Styling for each image */
 #image-container img {
-  width: 48%; /* Adjust width to 48% to fit two images side by side with some gap */
-  max-width: 100%; /* Ensure images don't exceed their container's width */
+  display: block;
+  margin-left: 10px;
+  width: calc(50% - 5px); /* Two images side by side with consistent gap */
+  max-width: 100%;
+  margin: 0;
 }
 
-/* When the width is less than 640px, stack the images vertically */
+/* Stacking images vertically on small screens */
 @media (max-width: 640px) {
+  #map-container {
+    flex-direction: column;
+    align-items: center;
+    width: 100%; /* Full width for the container */
+  }
+
+  #street-view, #mini-map {
+    width: 100%; /* Full width for each element */
+    margin: 10px 0; /* Add some space between the elements */
+  }
+
   #image-container {
     flex-direction: column; /* Stack images vertically */
-    align-items: center;    /* Center images */
+    width: 100%; /* Full width for the container */
   }
 
   #image-container img {
-    width: 100%; /* Images take full width in vertical layout */
+    width: 100%; /* Full width for each image */
+  }
+}
+
+/* Additional media query for very small screens (like 400px) */
+@media (max-width: 400px) {
+  #map-container, #image-container {
+    width: 100%; /* Ensure containers take full width */
+  }
+
+  #street-view, #mini-map {
+    width: 100%; /* Full width for the elements */
+  }
+
+  #image-container img {
+    width: 100%; /* Images also take full width */
+    margin: 10px 0; /* Add some margin between images */
   }
 }
