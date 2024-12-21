@@ -61,6 +61,7 @@ function initStreetView() {
     disableDefaultUI: true,  // Minimal UI for the mini-map
   });
 
+
   // Add marker to mini-map
   miniMapMarker = new google.maps.Marker({
     position: startLocation,
@@ -85,10 +86,13 @@ function initStreetView() {
     latestPOV = panorama.getPov();
 
     const zoom = panorama.getZoom();
-    const fov = 180 / Math.pow(2, zoom);
+    const fov = computeHorizontalFOV(zoom);
 
     const streetViewHeight = document.getElementById('street-view').offsetHeight;
-    createScale('street-view-scale', fov, streetViewHeight);
+    const streetViewWidth = document.getElementById('street-view').offsetWidth;
+    const verticalFOV = computeVerticalFOV(fov, streetViewWidth, streetViewHeight);
+
+    createScale('street-view-scale', verticalFOV, streetViewHeight);
 
     miniMapMarker.setIcon({
       path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
@@ -107,6 +111,50 @@ function initStreetView() {
 
 }
 
+// Compute the horizontal FOV based on the zoom level
+function computeHorizontalFOV(zoom) {
+  return 360 / Math.PI * Math.atan(Math.pow(2, 1 - zoom));
+}
+
+// Compute the vertical FOV based on horizontal FOV and dimensions
+function computeVerticalFOV(horizontalFOV, width, height) {
+  return (horizontalFOV * height) / width;
+}
+
+// Add event listener for the "Upload and Save" button in the import photo form
+function setupPhotoUpload() {
+  const submitPhotoButton = document.getElementById('submit-photo-button');
+  submitPhotoButton.addEventListener('click', async () => {
+    const form = document.getElementById('import-photo-form');
+    const formData = new FormData(form);
+
+    const fileInput = document.getElementById('photo-file');
+    if (fileInput.files.length === 0) {
+      alert('Please select an image file.');
+      return;
+    }
+
+    formData.append('file', fileInput.files[0]);
+
+    try {
+      const response = await axios.post('/api/import-photo', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.data.success) {
+        alert('Photo uploaded and saved successfully.');
+      } else {
+        alert('Failed to upload photo.');
+      }
+    } catch (error) {
+      console.error('Error uploading photo:', error);
+      alert('An error occurred while uploading the photo.');
+    }
+  });
+}
+
 // Capture the current Street View and send a request to the server
 function captureCurrentView() {
   if (latestPosition && latestPOV) {
@@ -114,14 +162,14 @@ function captureCurrentView() {
     const zoom = panorama.getZoom();
     
     // Calculate the Field of View (FOV) based on the zoom level
-    const fov = 180 / Math.pow(2, zoom);
+    const horizontalFOV = computeHorizontalFOV(zoom);
 
     const data = {
       latitude: latestPosition.lat(),
       longitude: latestPosition.lng(),
       heading: latestPOV.heading,
       pitch: latestPOV.pitch,
-      fov: fov,  // Adjust the FOV if necessary
+      fov: horizontalFOV,  // Adjust the FOV if necessary
     };
 
     // Send request to your server to capture the view
@@ -131,7 +179,9 @@ function captureCurrentView() {
         window.capturedData = data;
 
         const imageHeight = document.getElementById('image-ref').offsetHeight;
-        createScale('image-scale', fov, imageHeight);
+        const imageWidth = document.getElementById('image-ref').offsetWidth;
+        const verticalFOV = computeVerticalFOV(horizontalFOV, imageWidth, imageHeight);
+        createScale('image-scale', verticalFOV, imageHeight);
       })
       .catch(error => {
         console.error('Error fetching image:', error);
@@ -187,10 +237,19 @@ function initializeWebSocket() {
   };
 }
 
+// Function to toggle the visibility of the import photo form
+function toggleImportPhotoForm() {
+  const formContainer = document.getElementById('import-photo-container');
+  formContainer.style.display = formContainer.style.display === 'none' ? 'block' : 'none';
+}
 
 // Add the event listener for the buttons
+function initializeImportPhotoButton() {
+  const importViewButton = document.getElementById('import-view-button');
+  importViewButton.addEventListener('click', toggleImportPhotoForm);
+}
 function initializeCaptureButton() {
-  document.getElementById('capture-button').addEventListener('click', captureCurrentView);
+  document.getElementById('capture-view-button').addEventListener('click', captureCurrentView);
 }
 function initializeExportButtons() {
   document.getElementById('export-pdf-button').addEventListener('click', exportAsPDF);
@@ -342,7 +401,7 @@ function createScale(containerId, fov, height) {
     label.style.transform = 'translate(-25px, 50%)';
     label.style.left = '0';
     label.style.bottom = `${i * segmentHeight}px`;
-    label.innerText = `${Math.round((fov / (segments - 1)) * i)}°`;
+    label.innerText = `${Math.round((anglePerSegment) * i)}°`;
     container.appendChild(label);
 
     if (i < segments) {
@@ -359,19 +418,21 @@ function createScale(containerId, fov, height) {
 function initializeScales() {
   // Example FOVs (adjust dynamically as needed)
   const streetViewZoom = panorama ? panorama.getZoom() : 1;
-  const streetViewFOV = 180 / Math.pow(2, streetViewZoom);
+  const horizontalFOV = computeHorizontalFOV(streetViewZoom);
+
+  const streetViewHeight = document.getElementById('street-view').offsetHeight;
+  const streetViewWidth = document.getElementById('street-view').offsetWidth;
+  const verticalFOV = computeVerticalFOV(horizontalFOV, streetViewWidth, streetViewHeight);
 
   const imageFOV = window.capturedData ? window.capturedData.fov : 75;
-
-  // Heights of the elements
-  const streetViewHeight = document.getElementById('street-view').offsetHeight;
   const imageHeight = document.getElementById('image-ref').offsetHeight;
+  const imageWidth = document.getElementById('image-ref').offsetWidth;
+  const imageVerticalFOV = computeVerticalFOV(imageFOV, imageWidth, imageHeight);
 
   // Create scales
-  createScale('street-view-scale', streetViewFOV, streetViewHeight);
-  createScale('image-scale', imageFOV, imageHeight);
+  createScale('street-view-scale', verticalFOV, streetViewHeight);
+  createScale('image-scale', imageVerticalFOV, imageHeight);
 }
-
 
 // Initialize the app by setting up the map, WebSocket, model loader, and capture button
 function initializeApp() {
@@ -379,6 +440,8 @@ function initializeApp() {
   fetchAvailableModels();
   initializeModelSelection();
   initializeWebSocket();
+  initializeImportPhotoButton();
+  setupPhotoUpload();
   initializeCaptureButton();
   initializeExportButtons();
   initializeScales();

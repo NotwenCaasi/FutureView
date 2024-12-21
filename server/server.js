@@ -4,6 +4,7 @@ const fs = require('fs').promises;
 const path = require('path');
 const axios = require('axios');
 const PImage = require('pureimage');
+const multer = require('multer');
 const sharp = require('sharp');
 require('dotenv').config();
 const WebSocket = require('ws'); // WebSocket server
@@ -26,6 +27,8 @@ const imageFutureIntegratedPath = path.join(__dirname, '../public/data/image_fut
 const defaultModel = 'empty';  // Define the default model to load
 
 const dataDir = path.join(__dirname, '../public/data');
+
+const upload = multer({ dest: 'uploads/' }); // Temporary upload folder
 
 let sketchupScriptCustomView = null;
 
@@ -76,6 +79,40 @@ startServer().catch((err) => {
   console.error('Error starting server:', err);
 });
 
+app.post('/api/import-photo', upload.single('file'), async (req, res) => {
+  const { name, latitude, longitude, heading, pitch, fov } = req.body;
+  const file = req.file;
+
+  if (!file || !name || !latitude || !longitude || !heading || !pitch || !fov) {
+    return res.status(400).json({ success: false, error: 'Missing required fields.' });
+  }
+
+  try {
+    const outputDir = path.join(__dirname, '../public/images', 'username'); // Replace with dynamic username
+    const outputPath = path.join(outputDir, `${name}.png`);
+
+    // Ensure the output directory exists
+    await fs.mkdir(outputDir, { recursive: true });
+
+    // Crop and downscale the image
+    await sharp(file.path)
+      .resize(640, 640, { fit: 'cover' }) // Resize to 640x640 and crop
+      .toFile(outputPath);
+
+    // Remove the temporary uploaded file
+    await fs.unlink(file.path);
+
+    // Save parameters (you can extend this logic to save parameters to a database if needed)
+    const parameters = { name, latitude, longitude, heading, pitch, fov };
+    const paramFilePath = path.join(outputDir, `${name}.json`);
+    await fs.writeFile(paramFilePath, JSON.stringify(parameters, null, 2));
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error processing uploaded photo:', error);
+    res.status(500).json({ success: false, error: 'Error processing uploaded photo.' });
+  }
+});
 
 async function loadCustomViewScript() {
   try {
