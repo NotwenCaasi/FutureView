@@ -615,6 +615,10 @@ async function waitForFile(filePath, timeout = 60000, interval = 2000) {
   return checkFile();
 }
 
+app.get('/api/maps-key', (req, res) => {
+  res.json({ key: process.env.GOOGLE_MAPS_API_KEY });
+});
+
 
 // API endpoint to proxy Street View requests and save camera parameters
 app.get('/api/streetview', async (req, res) => {

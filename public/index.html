@@ -79,9 +79,18 @@
   <script src="app.js"></script>
 
   <!-- Include the Google Maps JavaScript API -->
-  <script async defer
-    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAXMvL6EIqqVU3fwtyicfB-SFqrgZzSJn4&callback=initMap">
-  </script>
+<script>
+  fetch('/api/maps-key')
+    .then(response => response.json())
+    .then(data => {
+      const script = document.createElement('script');
+      script.src = `https://maps.googleapis.com/maps/api/js?key=${data.key}&callback=initMap`;
+      script.async = true;
+      script.defer = true;
+      document.head.appendChild(script);
+    });
+</script>
+
 
   <!-- Image container for future modified and future images -->
   <div id="image-container" >
