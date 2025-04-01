@@ -33,7 +33,7 @@ end
 require 'json'
 
 # Adjust the path to 'camera_params.json'
-params_file = File.join('C:/Users/v-martineau/Documents/Etudes/EOLIEN/2-PE MSL Champ Fleury/FutureView/server/', 'data', 'camera_params.json')
+params_file = File.join('C:/Users/v-martineau/Documents/FutureView/server/', 'data', 'camera_params.json')
 params = JSON.parse(File.read(params_file))
 
 # Extract parameters
@@ -108,7 +108,7 @@ options =  Sketchup.active_model.rendering_options
 
 # Render the image with transparent background
 options1 = {
-  filename: "C:/Users/v-martineau/Documents/Etudes/EOLIEN/2-PE MSL Champ Fleury/FutureView/public/data/image_new.png",
+  filename: "C:/Users/v-martineau/Documents/FutureView/public/data/image_new.png",
   width: 640,
   height: 640,
   transparent: true
